@@ -1,4 +1,5 @@
 import { Mesh, PlaneGeometry, ShaderMaterial, DoubleSide, CanvasTexture, Texture, Vector2 } from "three";
+import { card_vertex_shader, card_fragment_shader } from "./card_shader";
 
 export type CardTextContent = {
   title: string;
@@ -30,25 +31,8 @@ export class CardMesh extends Mesh<PlaneGeometry, ShaderMaterial> {
         backTex: { value: textures.back },
         uUvMirror: { value: new Vector2(1.0, 1.0) },
       },
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform sampler2D frontTex;
-        uniform sampler2D backTex;
-        varying vec2 vUv;
-        void main() {
-          if (gl_FrontFacing) {
-            gl_FragColor = texture2D(backTex, vUv);
-          } else {
-            gl_FragColor = texture2D(frontTex, vec2(1.0 - vUv.x, vUv.y));
-          }
-        }
-      `,
+      vertexShader: card_vertex_shader,
+      fragmentShader: card_fragment_shader,
       side: DoubleSide,
       transparent: true,
     });
@@ -84,14 +68,18 @@ export class CardMesh extends Mesh<PlaneGeometry, ShaderMaterial> {
     }
   }
 
-  public static createCanvasTextureFromText(input: CardTextContent, canvasSize = { width: 2048, height: 3072 }): {
+  public static createCanvasTextureFromText(input: CardTextContent, canvasSize?: { width: number; height: number }): {
     front: CanvasTexture;
     back: CanvasTexture;
   } {
+    // Auto-detect optimal texture size based on device performance
+    const defaultSize = CardMesh.getOptimalTextureSize();
+    const size = canvasSize || defaultSize;
+    
     const makeCanvas = (drawer: (ctx: CanvasRenderingContext2D, w: number, h: number) => void) => {
       const canvas = document.createElement('canvas');
-      canvas.width = canvasSize.width;
-      canvas.height = canvasSize.height;
+      canvas.width = size.width;
+      canvas.height = size.height;
       const ctx = canvas.getContext('2d')!;
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
@@ -160,6 +148,24 @@ export class CardMesh extends Mesh<PlaneGeometry, ShaderMaterial> {
     });
 
     return { front, back };
+  }
+
+  private static getOptimalTextureSize(): { width: number; height: number } {
+    // Detect device performance level
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const memory = (navigator as { deviceMemory?: number }).deviceMemory || 4;
+    const cores = navigator.hardwareConcurrency || 4;
+    
+    if (isMobile && (memory <= 2 || cores <= 2)) {
+      // Low-end devices: smaller textures
+      return { width: 512, height: 768 };
+    } else if (isMobile || memory <= 4) {
+      // Medium devices: medium textures
+      return { width: 1024, height: 1536 };
+    } else {
+      // High-end devices: larger textures
+      return { width: 1536, height: 2304 };
+    }
   }
 }
 

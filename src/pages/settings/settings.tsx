@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { usePlayerStore } from "../../store/store";
 import { useNavigate } from "react-router-dom";
+import { UserCheck, Volume2, VolumeX, ChevronDown, ChevronUp, Heart } from "lucide-react";
 
 const Settings = () => {
-    const { player1, player2, setPlayer1, setPlayer2 } = usePlayerStore();
+    const { player1, player2, setPlayer1, setPlayer2, vibrationEnabled, setVibrationEnabled } = usePlayerStore();
     const navigate = useNavigate();
     const [femalePlayerName, setFemalePlayerName] = useState("");
     const [malePlayerName, setMalePlayerName] = useState("");
+    const [isSettingsExpanded, setIsSettingsExpanded] = useState(false);
 
     // 回到主页时，自动把已保存的玩家名同步到输入框，保持可编辑
     useEffect(() => {
@@ -40,7 +42,7 @@ const Settings = () => {
                     <div className="text-center">
                         <div className="mb-6">
                             <div className="w-16 h-16 bg-gray-800 rounded-full shadow-inner flex items-center justify-center mx-auto">
-                                <span className="text-2xl text-purple-400">♀</span>
+                                <Heart className="w-8 h-8 text-pink-400" />
                             </div>
                         </div>
                         <input
@@ -58,7 +60,7 @@ const Settings = () => {
                     <div className="text-center">
                         <div className="mb-6">
                             <div className="w-16 h-16 bg-gray-800 rounded-full shadow-inner flex items-center justify-center mx-auto">
-                                <span className="text-2xl text-purple-400">♂</span>
+                                <UserCheck className="w-8 h-8 text-purple-400" />
                             </div>
                         </div>
                         <input
@@ -84,7 +86,64 @@ const Settings = () => {
                     </button>
                 </div>
 
-                {/* 仅保留一个确认按钮，无开始游戏按钮 */}
+                {/* 高级设置 - 可展开区域 */}
+                <div className="mt-8">
+                    <button
+                        onClick={() => setIsSettingsExpanded(!isSettingsExpanded)}
+                        className="w-full flex items-center justify-between px-4 py-3 bg-gray-800 rounded-xl hover:bg-gray-700 transition-all duration-200"
+                    >
+                        <span className="text-gray-300 text-sm font-medium">更多设置</span>
+                        {isSettingsExpanded ? (
+                            <ChevronUp className="w-4 h-4 text-gray-400" />
+                        ) : (
+                            <ChevronDown className="w-4 h-4 text-gray-400" />
+                        )}
+                    </button>
+                    
+                    {/* 展开的设置内容 */}
+                    {isSettingsExpanded && (
+                        <div className="mt-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                            {/* 振动设置 */}
+                            <div className="bg-gray-800 rounded-xl p-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-3">
+                                        {vibrationEnabled ? (
+                                            <Volume2 className="w-5 h-5 text-purple-400" />
+                                        ) : (
+                                            <VolumeX className="w-5 h-5 text-gray-500" />
+                                        )}
+                                        <div>
+                                            <span className="text-white text-sm font-medium">振动反馈</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setVibrationEnabled(!vibrationEnabled)}
+                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                            vibrationEnabled ? 'bg-purple-600' : 'bg-gray-600'
+                                        }`}
+                                    >
+                                        <span
+                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                                vibrationEnabled ? 'translate-x-6' : 'translate-x-1'
+                                            }`}
+                                        />
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {/* 预留其他设置的位置 */}
+                            <div className="bg-gray-800 rounded-xl p-4 opacity-50">
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-5 h-5 bg-gray-600 rounded"></div>
+                                    <div>
+                                        <span className="text-gray-400 text-sm font-medium">更多设置</span>
+                                        <p className="text-gray-500 text-xs">敬请期待</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

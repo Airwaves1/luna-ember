@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { usePlayerStore } from "../store/store";
+import { createClickVibration, createSuccessVibration } from "../utils/vibration";
 
 type TurnPickerProps = {
     onPicked?: (picked: 'player1' | 'player2') => void;
@@ -38,6 +39,9 @@ const TurnPicker = ({ onPicked, className, pickedKey = null, interactive = true 
     const startPick = () => {
         if (!interactive || isPicking) return;
         
+        // 点击振动效果
+        createClickVibration(25);
+        
         setIsPicking(true);
         setPicked(null);
         setAnimationPhase('switching');
@@ -59,6 +63,9 @@ const TurnPicker = ({ onPicked, className, pickedKey = null, interactive = true 
                 const res = players[idx].key;
                 setPicked(res);
                 setAnimationPhase('result');
+                
+                // 成功振动效果
+                createSuccessVibration();
                 
                 // Show final result - the button text will update automatically via React state
                 

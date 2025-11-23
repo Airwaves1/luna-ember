@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { usePlayerStore } from "../../../store/store";
 import { useNavigate } from "react-router-dom";
 import TurnPicker from "../../../components/turn_picker";
-import CardStageSimple from "../../../components/card_stage_simple";
-import { WebGLManager } from "../../../components/three/WebGLManager";
+import CardStage from "../../../components/card_stage";
+import { WebGLManager } from "../../../components/three/webgl_manager";
 import type { CardData } from "../../../components/card";
 import cardsData from "../../../data/cards.json";
+import { ArrowLeft, UserCheck, Heart } from "lucide-react";
 
 const CrazyAdventure = () => {
     const { player1, player2 } = usePlayerStore();
@@ -40,7 +41,7 @@ const CrazyAdventure = () => {
     return (
         <div className="min-h-screen bg-gray-900 text-white">
             {/* CardStage with visibility control */}
-            <CardStageSimple 
+            <CardStage 
                 cards={selectedCards.map(card => ({
                     title: card.title,
                     content: card.content
@@ -51,9 +52,6 @@ const CrazyAdventure = () => {
                 showNextButton={true}
                 visible={phase === 'show'}
                 onNext={resetForNext}
-                onCardSelected={(index) => {
-                    // Card selected
-                }}
             />
             
             {/* Pick phase layout */}
@@ -62,9 +60,9 @@ const CrazyAdventure = () => {
                     <div className="relative mb-6">
                         <button 
                             onClick={() => navigate('/home')} 
-                            className="absolute left-0 top-0 px-3 py-1.5 bg-gray-800 rounded-lg text-sm hover:bg-gray-700 transition-colors"
+                            className="absolute left-0 top-0 px-3 py-1.5 bg-gray-800 rounded-lg text-sm hover:bg-gray-700 transition-colors flex items-center space-x-1"
                         >
-                            ←
+                            <ArrowLeft className="w-4 h-4" />
                         </button>
                         <h1 className="text-2xl font-light text-center">真心话大冒险</h1>
                     </div>
@@ -73,7 +71,7 @@ const CrazyAdventure = () => {
                             {player1 && (
                                 <div className={`flex items-center space-x-2 ${pickedPlayer === 'player1' ? 'bg-white/10 rounded-lg px-3 py-2' : ''}`}>
                                     <div className={`w-8 h-8 rounded-full shadow-inner flex items-center justify-center ${pickedPlayer === 'player1' ? 'bg-white/20' : 'bg-gray-800'}`}>
-                                        <span className="text-purple-400">♀</span>
+                                        <Heart className="w-5 h-5 text-pink-400" />
                                     </div>
                                     <span className="text-gray-300">{player1.name}</span>
                                 </div>
@@ -81,7 +79,7 @@ const CrazyAdventure = () => {
                             {player2 && (
                                 <div className={`flex items-center space-x-2 ${pickedPlayer === 'player2' ? 'bg-white/10 rounded-lg px-3 py-2' : ''}`}>
                                     <div className={`w-8 h-8 rounded-full shadow-inner flex items-center justify-center ${pickedPlayer === 'player2' ? 'bg-white/20' : 'bg-gray-800'}`}>
-                                        <span className="text-purple-400">♂</span>
+                                        <UserCheck className="w-5 h-5 text-purple-400" />
                                     </div>
                                     <span className="text-gray-300">{player2.name}</span>
                                 </div>

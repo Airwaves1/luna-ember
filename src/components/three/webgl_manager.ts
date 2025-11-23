@@ -10,8 +10,26 @@ export class WebGLManager {
   private isAnimating = false;
   private subscribers: Set<() => void> = new Set();
   private currentContainer: HTMLElement | null = null;
+  private performanceLevel: 'low' | 'medium' | 'high' = 'medium';
 
-  private constructor() {}
+  private constructor() {
+    this.detectPerformanceLevel();
+  }
+
+  private detectPerformanceLevel(): void {
+    // Detect device performance level based on various factors
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const memory = (navigator as { deviceMemory?: number }).deviceMemory || 4; // Default to 4GB if not available
+    const cores = navigator.hardwareConcurrency || 4; // Default to 4 cores if not available
+    
+    if (isMobile && (memory <= 2 || cores <= 2)) {
+      this.performanceLevel = 'low';
+    } else if (isMobile || memory <= 4) {
+      this.performanceLevel = 'medium';
+    } else {
+      this.performanceLevel = 'high';
+    }
+  }
 
   public static getInstance(): WebGLManager {
     if (!WebGLManager.instance) {
@@ -40,16 +58,16 @@ export class WebGLManager {
     }
 
     try {
-      // Create renderer with minimal settings for better performance
+      // Create renderer with optimized settings for mobile performance
       this.renderer = new WebGLRenderer({
         antialias: false,
         alpha: true,
-        powerPreference: "low-power",
+        powerPreference: "high-performance", // Use high performance for better mobile experience
         preserveDrawingBuffer: false,
         failIfMajorPerformanceCaveat: false,
         stencil: false,
         depth: false, // Disable depth buffer for 2D cards
-        precision: "mediump" // Use medium precision for better performance
+        precision: "highp" // Use high precision for better quality
       });
 
       const gl = this.renderer.getContext();
@@ -57,8 +75,16 @@ export class WebGLManager {
         throw new Error('Failed to create WebGL context');
       }
 
-      // Set very conservative pixel ratio for better performance
-      this.renderer.setPixelRatio(1); // Fixed to 1 for consistent performance
+      // Set pixel ratio based on device performance level
+      let pixelRatio = window.devicePixelRatio || 1;
+      if (this.performanceLevel === 'low') {
+        pixelRatio = Math.min(pixelRatio, 1); // Cap at 1 for low-end devices
+      } else if (this.performanceLevel === 'medium') {
+        pixelRatio = Math.min(pixelRatio, 1.5); // Cap at 1.5 for medium devices
+      } else {
+        pixelRatio = Math.min(pixelRatio, 2); // Cap at 2 for high-end devices
+      }
+      this.renderer.setPixelRatio(pixelRatio);
       
       // Create scene and camera
       this.scene = new Scene();
@@ -96,7 +122,13 @@ export class WebGLManager {
     
     this.isAnimating = true;
     let lastTime = 0;
-    const targetFPS = 30; // Limit to 30 FPS to reduce load
+    // Adjust FPS based on performance level
+    let targetFPS = 60;
+    if (this.performanceLevel === 'low') {
+      targetFPS = 30; // Lower FPS for low-end devices
+    } else if (this.performanceLevel === 'medium') {
+      targetFPS = 45; // Medium FPS for medium devices
+    }
     const frameInterval = 1000 / targetFPS;
     
     const animate = (currentTime: number) => {

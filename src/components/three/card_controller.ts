@@ -1,5 +1,6 @@
 import { Group, PerspectiveCamera, Scene, Vector3, Mesh } from "three";
 import gsap from "gsap";
+import { createDrawVibration } from "../../utils/vibration";
 
 export type CardLike = {
     position: Vector3;
@@ -33,19 +34,22 @@ export class CardController {
         return this.group.children as Mesh[];
     }
 
-  // Arrange all cards overlapped at origin (small z stacking)
+  // Arrange all cards overlapped at origin (small z stacking) - Optimized for mobile
   public async overlap(cards: Mesh[]): Promise<void> {
-    const DURATION = 0.4;
+    const DURATION = 0.6; // Slower duration for smoother feel
+    
     await Promise.all(cards.map((c, i) => new Promise<void>(resolve => {
-      gsap.to(c.position, { duration: DURATION, x: 0, y: 0, z: -0.05 * i, onComplete: () => resolve() });
-      gsap.to(c.rotation, { duration: DURATION, x: 0, y: 0, z: 0 });
-      gsap.to((c.material as unknown as { opacity: number }), { duration: DURATION, opacity: 1, overwrite: true });
+      // Use GSAP timeline for better performance
+      const tl = gsap.timeline({ onComplete: () => resolve() });
+      tl.to(c.position, { duration: DURATION, x: 0, y: 0, z: -0.05 * i, ease: "power2.out" })
+        .to(c.rotation, { duration: DURATION, x: 0, y: 0, z: 0, ease: "power2.out" }, 0)
+        .to((c.material as unknown as { opacity: number }), { duration: DURATION, opacity: 1 }, 0);
     })));
   }
 
-    // Strategy: fan out in a true arc shape (like spreading cards from bottom center)
+    // Strategy: fan out in a true arc shape (like spreading cards from bottom center) - Optimized for mobile
   public fanOut: MotionStrategy = async (cards, scene, camera, ...args) => {
-        const DURATION = 1.2;
+        const DURATION = 1.2; // Slower duration for more elegant fan out
         const radius = (args[0] as number) ?? 3.5;
         const angleSpread = (args[1] as number) ?? Math.PI / 3;
         const midIndex = (cards.length - 1) / 2;
@@ -59,19 +63,20 @@ export class CardController {
             const y = -radius * (1 - Math.cos(angle)); // NEGATIVE Y for downward arc
             const z = -0.2 * i; // Depth stacking
 
-            gsap.to(c.position, { 
+            // Use GSAP timeline for better performance
+            const tl = gsap.timeline({ onComplete: () => resolve() });
+            tl.to(c.position, { 
                 duration: DURATION, 
                 x, 
                 y, 
                 z, 
-                ease: "power2.out",
-                onComplete: () => resolve() 
-            });
-            gsap.to(c.rotation, { 
+                ease: "power2.out"
+            })
+            .to(c.rotation, { 
                 duration: DURATION, 
                 z: -angle, // NEGATIVE angle to match downward arc direction
                 ease: "power2.out"
-            });
+            }, 0); // Start rotation animation at the same time
         })));
     };
 
@@ -112,16 +117,19 @@ export class CardController {
         })));
     };
 
-  // Focus selected: lift up -> hide others -> center -> flip to front
+  // Focus selected: lift up -> hide others (at half point) -> center -> flip to front - Optimized for mobile
   public async focusSelected(cards: Mesh[], selectedIndex: number): Promise<void> {
-    const D1 = 0.3; // Lift up duration
-    const D2 = 0.4; // Hide others and center duration
-    const D3 = 0.6; // Flip duration
+    const D1 = 0.4; // Slower lift up duration
+    const D2 = 0.5; // Slower hide others and center duration
+    const D3 = 0.6; // Slower flip duration
     
     const target = cards[selectedIndex];
     
-    // Step 1: Lift the selected card up (like being picked up)
-    await new Promise<void>(resolve => {
+    // 开始抽取振动效果
+    createDrawVibration();
+    
+    // Step 1: Start lifting the selected card up
+    const liftPromise = new Promise<void>(resolve => {
       gsap.to(target.position, { 
         duration: D1, 
         y: target.position.y + 0.5, // Lift up by 0.5 units
@@ -130,44 +138,58 @@ export class CardController {
       });
     });
     
-    // Step 2: Hide other cards and center the selected card
-    await Promise.all(cards.map((c, i) => new Promise<void>(resolve => {
-      if (i === selectedIndex) {
-        // Center the selected card
-        gsap.to(c.position, { 
+    // Step 2: Start hiding other cards when lift animation is halfway through
+    const hideOthersPromise = new Promise<void>(resolve => {
+      // Wait for half of the lift animation duration
+      setTimeout(() => {
+        Promise.all(cards.map((c, i) => new Promise<void>(resolveCard => {
+          if (i !== selectedIndex) {
+            // Hide other cards
+            gsap.to((c.material as unknown as { opacity: number }), { 
+              duration: D2, 
+              opacity: 0, 
+              ease: "power2.in",
+              onComplete: () => {
+                c.visible = false;
+                resolveCard();
+              }
+            });
+          } else {
+            resolveCard(); // Selected card doesn't need to hide
+          }
+        }))).then(() => resolve());
+      }, D1 * 500); // Half of lift duration in milliseconds
+    });
+    
+    // Step 3: Center the selected card after lift is complete
+    const centerPromise = liftPromise.then(() => {
+      return new Promise<void>(resolve => {
+        const tl = gsap.timeline({ onComplete: () => resolve() });
+        tl.to(target.position, { 
           duration: D2, 
           x: 0, 
           y: 0, 
           z: 0,
           ease: "power2.inOut"
-        });
-        gsap.to(c.rotation, { 
+        })
+        .to(target.rotation, { 
           duration: D2, 
           x: 0, 
           y: 0, 
           z: 0,
-          ease: "power2.inOut",
-          onComplete: () => resolve() 
-        });
-        gsap.to((c.material as unknown as { opacity: number }), { 
+          ease: "power2.inOut"
+        }, 0)
+        .to((target.material as unknown as { opacity: number }), { 
           duration: D2, 
           opacity: 1 
-        });
-      } else {
-        // Hide other cards
-        gsap.to((c.material as unknown as { opacity: number }), { 
-          duration: D2, 
-          opacity: 0, 
-          ease: "power2.in",
-          onComplete: () => {
-            c.visible = false;
-            resolve();
-          }
-        });
-      }
-    })));
+        }, 0);
+      });
+    });
     
-    // Step 3: Flip the selected card to show front
+    // Step 4: Wait for both hide others and center to complete, then flip
+    await Promise.all([hideOthersPromise, centerPromise]);
+    
+    // Step 5: Flip the selected card to show front
     await new Promise<void>(resolve => {
       gsap.to(target.rotation, { 
         duration: D3, 
