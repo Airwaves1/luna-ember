@@ -1,4 +1,15 @@
-import { Scene, PerspectiveCamera, WebGLRenderer, Color } from "three";
+import { Scene, PerspectiveCamera, WebGLRenderer, Color, Texture, SRGBColorSpace, RepeatWrapping, MirroredRepeatWrapping, TextureLoader } from "three";
+interface CardTextures {
+  cardTexture: Texture | null;
+  cardBgTexture: Texture | null;
+  colorTexture: Texture | null;
+  highlightTexture: Texture | null;
+  noiseTexture: Texture | null;
+  patternTexture: Texture | null;
+  patternEeveeTexture: Texture | null;
+  dissolveTexture: Texture | null;
+  floorTexture: Texture | null;
+}
 
 export class WebGLManager {
   private static instance: WebGLManager | null = null;
@@ -10,6 +21,19 @@ export class WebGLManager {
   private isAnimating = false;
   private currentContainer: HTMLElement | null = null;
 
+  private loader: TextureLoader = new TextureLoader();
+  private cardTextures: CardTextures = {
+    cardTexture: null,
+    cardBgTexture: null,
+    colorTexture: null,
+    highlightTexture: null,
+    noiseTexture: null,
+    patternTexture: null,
+    patternEeveeTexture: null,
+    dissolveTexture: null,
+    floorTexture: null,
+  };
+
   private constructor() {
   }
 
@@ -18,6 +42,36 @@ export class WebGLManager {
       WebGLManager.instance = new WebGLManager();
     }
     return WebGLManager.instance;
+  }
+
+  private async loadTexture(): Promise<void> {
+    this.cardTextures.cardTexture = await this.loader.loadAsync("/img/img_vs.webp");
+    this.cardTextures.cardTexture.colorSpace = SRGBColorSpace;
+    this.cardTextures.cardTexture.wrapS = this.cardTextures.cardTexture.wrapT = RepeatWrapping;
+    
+    this.cardTextures.cardBgTexture = await this.loader.loadAsync("/img/img_cardBg.webp");
+    this.cardTextures.cardBgTexture.colorSpace = SRGBColorSpace;
+    this.cardTextures.cardBgTexture.wrapS = this.cardTextures.cardBgTexture.wrapT = RepeatWrapping;
+    
+    this.cardTextures.colorTexture = await this.loader.loadAsync("/img/texture/color.webp");
+    this.cardTextures.colorTexture.wrapS = this.cardTextures.colorTexture.wrapT = MirroredRepeatWrapping;
+    
+    this.cardTextures.highlightTexture = await this.loader.loadAsync("/img/texture/highlight.webp");
+    
+    this.cardTextures.noiseTexture = await this.loader.loadAsync("/img/texture/noise.webp");
+    this.cardTextures.noiseTexture.wrapS = this.cardTextures.noiseTexture.wrapT = RepeatWrapping;
+    
+    this.cardTextures.patternTexture = await this.loader.loadAsync("/img/texture/pattern.webp");
+    this.cardTextures.patternTexture.wrapS = this.cardTextures.patternTexture.wrapT = RepeatWrapping;
+    
+    this.cardTextures.patternEeveeTexture = await this.loader.loadAsync("/img/texture/patternEevee.webp");
+    this.cardTextures.patternEeveeTexture.wrapS = this.cardTextures.patternEeveeTexture.wrapT = RepeatWrapping;
+    
+    this.cardTextures.dissolveTexture = await this.loader.loadAsync("/img/texture/dissolve.webp");
+    this.cardTextures.dissolveTexture.wrapS = this.cardTextures.dissolveTexture.wrapT = RepeatWrapping;
+    
+    this.cardTextures.floorTexture = await this.loader.loadAsync("/img/texture/floor.webp");
+    this.cardTextures.floorTexture.wrapS = this.cardTextures.floorTexture.wrapT = RepeatWrapping;
   }
 
   public async initialize(container: HTMLElement): Promise<boolean> {
@@ -65,7 +119,10 @@ export class WebGLManager {
       this.scene.background = null as unknown as Color;
       
       this.camera = new PerspectiveCamera(60, 1, 0.1, 100);
-      this.camera.position.set(0, 0, 10);
+      this.camera.position.set(0, 0, 12);
+
+      // Load card textures once renderer/scene/camera exist
+      await this.loadTexture();
 
       // Add to container
       container.appendChild(this.renderer.domElement);
@@ -178,5 +235,9 @@ export class WebGLManager {
       WebGLManager.instance.cleanup();
       WebGLManager.instance = null;
     }
+  }
+
+  public getTextures(): CardTextures {
+    return this.cardTextures;
   }
 }

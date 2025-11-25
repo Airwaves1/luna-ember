@@ -1,5 +1,5 @@
 import { Mesh, PlaneGeometry, ShaderMaterial, DoubleSide, Texture, Vector2 } from "three";
-import { card_vertex_shader, card_fragment_shader } from "./card_shader";
+import { card_vertex_shader, card_fragment_shader } from "./shader/card_shader";
 
 export type CardTextContent = {
   title: string;
