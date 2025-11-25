@@ -189,14 +189,19 @@ export class CardController {
     // Step 4: Wait for both hide others and center to complete, then flip
     await Promise.all([hideOthersPromise, centerPromise]);
     
-    // Step 5: Flip the selected card to show front
+    // Step 5: Move toward camera while flipping for stronger focus
     await new Promise<void>(resolve => {
-      gsap.to(target.rotation, { 
-        duration: D3, 
-        y: Math.PI, 
-        ease: "power2.inOut",
-        onComplete: () => resolve() 
-      });
+      const tl = gsap.timeline({ onComplete: () => resolve() });
+      tl.to(target.position, {
+        duration: D3,
+        z: 3,
+        ease: "power2.inOut"
+      }, 0)
+        .to(target.rotation, {
+          duration: D3,
+          y: Math.PI,
+          ease: "power2.inOut"
+        }, 0);
     });
   }
 }

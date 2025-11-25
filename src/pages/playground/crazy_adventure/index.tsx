@@ -9,7 +9,7 @@ import cardsData from "../../../data/cards.json";
 import { ArrowLeft, UserCheck, Heart } from "lucide-react";
 
 const CrazyAdventure = () => {
-    const { player1, player2 } = usePlayerStore();
+    const { player1, player2, fullscreenEnabled } = usePlayerStore();
     const navigate = useNavigate();
     const [phase, setPhase] = useState<'pick' | 'show'>('pick');
     const [pickedPlayer, setPickedPlayer] = useState<'player1' | 'player2' | null>(null);
@@ -48,7 +48,7 @@ const CrazyAdventure = () => {
                 }))}
                 strategy="fan"
                 enableClickSelect={true}
-                fullscreen={true}
+                fullscreen={fullscreenEnabled}
                 showNextButton={true}
                 visible={phase === 'show'}
                 onNext={resetForNext}

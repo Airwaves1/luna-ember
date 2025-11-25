@@ -1,10 +1,19 @@
 import { useEffect, useState } from "react";
 import { usePlayerStore } from "../../store/store";
 import { useNavigate } from "react-router-dom";
-import { UserCheck, Volume2, VolumeX, ChevronDown, ChevronUp, Heart } from "lucide-react";
+import { UserCheck, ChevronDown, ChevronUp, Heart } from "lucide-react";
 
 const Settings = () => {
-    const { player1, player2, setPlayer1, setPlayer2, vibrationEnabled, setVibrationEnabled } = usePlayerStore();
+    const {
+        player1,
+        player2,
+        setPlayer1,
+        setPlayer2,
+        vibrationEnabled,
+        setVibrationEnabled,
+        fullscreenEnabled,
+        setFullscreenEnabled
+    } = usePlayerStore();
     const navigate = useNavigate();
     const [femalePlayerName, setFemalePlayerName] = useState("");
     const [malePlayerName, setMalePlayerName] = useState("");
@@ -107,14 +116,7 @@ const Settings = () => {
                             <div className="bg-gray-800 rounded-xl p-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-3">
-                                        {vibrationEnabled ? (
-                                            <Volume2 className="w-5 h-5 text-purple-400" />
-                                        ) : (
-                                            <VolumeX className="w-5 h-5 text-gray-500" />
-                                        )}
-                                        <div>
-                                            <span className="text-white text-sm font-medium">振动反馈</span>
-                                        </div>
+                                        <span className="text-white text-sm font-medium">振动反馈</span>
                                     </div>
                                     <button
                                         onClick={() => setVibrationEnabled(!vibrationEnabled)}
@@ -125,6 +127,27 @@ const Settings = () => {
                                         <span
                                             className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                                                 vibrationEnabled ? 'translate-x-6' : 'translate-x-1'
+                                            }`}
+                                        />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* 全屏展示设置 */}
+                            <div className="bg-gray-800 rounded-xl p-4">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-3">
+                                        <span className="text-white text-sm font-medium">全屏</span>
+                                    </div>
+                                    <button
+                                        onClick={() => setFullscreenEnabled(!fullscreenEnabled)}
+                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                            fullscreenEnabled ? 'bg-purple-600' : 'bg-gray-600'
+                                        }`}
+                                    >
+                                        <span
+                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                                fullscreenEnabled ? 'translate-x-6' : 'translate-x-1'
                                             }`}
                                         />
                                     </button>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Mesh, Raycaster, Vector2 } from "three";
 import { CardMesh } from "./three/card_mesh";
+import { cardTextureManager } from "./three/card_manager";
 import { CardController } from "./three/card_controller";
 import { WebGLManager } from "./three/webgl_manager";
 
@@ -84,9 +85,9 @@ const CardStage = ({
 
         // Create card meshes
         const meshes = cards.map((card, index) => {
-          const textures = CardMesh.createCanvasTextureFromText({ 
-            title: card.title, 
-            content: card.content 
+          const textures = cardTextureManager.getTextures({
+            title: card.title,
+            content: card.content
           });
           const mesh = new CardMesh(textures);
           mesh.position.set(0, 0, 0);
@@ -214,7 +215,7 @@ const CardStage = ({
           onClick={onNext}
           className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-10 px-8 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors text-lg font-medium"
         >
-          下一个挑战
+          next!
         </button>
       )}
     </div>
